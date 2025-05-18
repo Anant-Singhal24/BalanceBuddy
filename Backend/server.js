@@ -17,7 +17,7 @@ app.use(
     origin: [
       "https://balancebuddy-ut5c.onrender.com",
       "http://localhost:3000",
-      "http://localhost:5173", 
+      "http://localhost:5173",
     ], // ✅ Fallback to frontend URL
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
