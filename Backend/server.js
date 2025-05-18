@@ -11,10 +11,14 @@ const otpRoutes = require("./routes/otpRoutes");
 
 const app = express();
 
-// Middleware to handle CORS
+// ✅ Middleware to handle CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "*",
+    origin: [
+      "https://balance-buddy-2jlu.onrender.com",
+      "http://localhost:3000",
+      "http://localhost:5173", 
+    ], // ✅ Fallback to frontend URL
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -25,8 +29,8 @@ app.use(express.json());
 connectDB();
 
 app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/income", incomeRoutes);  
-app.use("/api/v1/expense", expenseRoutes); 
+app.use("/api/v1/income", incomeRoutes);
+app.use("/api/v1/expense", expenseRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/otp", otpRoutes); // OTP routes
 
