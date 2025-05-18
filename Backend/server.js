@@ -15,7 +15,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://balance-buddy-2jlu.onrender.com",
+      "https://balancebuddy-s2i8.onrender.com",
       "http://localhost:3000",
       "http://localhost:5173", 
     ], // ✅ Fallback to frontend URL
