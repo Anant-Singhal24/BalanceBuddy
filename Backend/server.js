@@ -35,14 +35,5 @@ app.use("/api/v1/expense", expenseRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/otp", otpRoutes); // OTP routes
 app.use("/api/v1/ai", aiRoutes); // AI Insights routes
-
-const frontendPath = path.join(__dirname, "Frontend", "dist"); // Vite build output
-app.use(express.static(frontendPath));
-
-// fallback to index.html for all non-API routes
-app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
-});
-
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
