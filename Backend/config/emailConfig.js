@@ -18,7 +18,7 @@ const transporter = nodemailer.createTransport({
 // Test email connection on startup
 const verifyEmailConnection = async () => {
   try {
-    await transporter.verify();
+    // await transporter.verify();
     // console.log("Email server connection established");
   } catch (error) {
     console.error("Email server connection failed:", error);
