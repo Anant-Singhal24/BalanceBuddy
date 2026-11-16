@@ -12,9 +12,16 @@ const CustomPieChart = ({
   data = [],
   label,
   totalAmount,
-  colors,
+  colors = [],
   showTextAnchor,
 }) => {
+  const formattedTotal =
+    typeof totalAmount === "number"
+      ? `₹${totalAmount.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`
+      : totalAmount || "₹0.00";
   return (
     <ResponsiveContainer width="100%" height={380}>
       <PieChart>
@@ -65,10 +72,7 @@ const CustomPieChart = ({
               fontSize="24px"
               fontWeight="semi-bold"
             >
-              {totalAmount.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {formattedTotal}
             </text>
           </>
         )}

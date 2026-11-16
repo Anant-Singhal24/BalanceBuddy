@@ -119,7 +119,10 @@ exports.verifyOTP = async (req, res) => {
         .json({ message: "Invalid OTP. Please try again." });
     }
 
-    // OTP is valid
+    // OTP is valid - mark as verified
+    otpData.isVerified = true;
+    otpStorage.set(email, otpData);
+
     return res
       .status(200)
       .json({ success: true, message: "OTP verified successfully" });
@@ -159,6 +162,7 @@ exports.resendOTP = async (req, res) => {
     otpStorage.set(email, {
       ...otpData,
       otp: newOTP,
+      isVerified: false,
       expires: Date.now() + 2 * 60 * 1000, // 2 minutes expiration
     });
 
@@ -188,15 +192,23 @@ exports.resendOTP = async (req, res) => {
 
 // Complete Registration after OTP verification
 exports.completeRegistration = async (req, res) => {
-  const { userData } = req.body;
-  const { fullName, email, password } = userData;
+  const userData = req.body?.userData || req.body;
+  const { fullName, email, password } = userData || {};
+
+  if (!fullName || !email || !password) {
+    return res
+      .status(400)
+      .json({ message: "All user details (fullName, email, password) are required" });
+  }
 
   try {
-    // Check if OTP verification happened
+    // Check if OTP was verified
     const otpData = otpStorage.get(email);
 
-    if (!otpData) {
-      return res.status(400).json({ message: "Please verify OTP first" });
+    if (!otpData || !otpData.isVerified) {
+      return res
+        .status(400)
+        .json({ message: "Please verify your OTP code before completing registration" });
     }
 
     // Check if user already exists

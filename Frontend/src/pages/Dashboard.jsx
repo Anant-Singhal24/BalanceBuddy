@@ -50,7 +50,7 @@ export default function Dashboard() {
           </div>
           <p className="text-2xl lg:text-3xl font-bold">
             ₹{" "}
-            {dashboardData?.totalBalance.toLocaleString(undefined, {
+            {(dashboardData?.totalBalance ?? 0).toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -64,7 +64,7 @@ export default function Dashboard() {
           </div>
           <p className="text-2xl lg:text-3xl font-bold text-emerald-500">
             ₹{" "}
-            {dashboardData?.totalIncome.toLocaleString(undefined, {
+            {(dashboardData?.totalIncome ?? 0).toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -78,7 +78,7 @@ export default function Dashboard() {
           </div>
           <p className="text-2xl lg:text-3xl font-bold text-red-500">
             ₹{" "}
-            {dashboardData?.totalExpenses.toLocaleString(undefined, {
+            {(dashboardData?.totalExpenses ?? 0).toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}

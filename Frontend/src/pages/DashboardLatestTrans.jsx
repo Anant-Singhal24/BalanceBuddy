@@ -9,7 +9,7 @@ export default function DashboardLatestTrans({ transactions }) {
           {transactions?.length > 0 ? (
             transactions.slice(0, 5).map((transaction, index) => (
               <div
-                key={transaction.id || `transaction-${index}`} // Ensure unique key
+                key={transaction._id || transaction.id || `transaction-${index}`}
                 className="flex items-center justify-between p-3 lg:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div>
@@ -33,7 +33,7 @@ export default function DashboardLatestTrans({ transactions }) {
                   }`}
                 >
                   {transaction.type === "income" ? "+" : "-"}₹
-                  {transaction.amount.toLocaleString(undefined, {
+                  {(transaction.amount ?? 0).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
