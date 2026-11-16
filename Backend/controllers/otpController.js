@@ -36,7 +36,10 @@ exports.generateOTP = async (req, res) => {
     // Send OTP via email
     const emailResult = await sendEmail({
       email,
+      otp,
+      expiry: "15 minutes",
       subject: "Your OTP for Balance Buddy",
+      message: `Your OTP for Balance Buddy is: ${otp}. This OTP will expire in 15 minutes.`,
       html: `
         <h1>Your One-Time Password</h1>
         <p>Your OTP for Balance Buddy is: <strong>${otp}</strong></p>
@@ -119,7 +122,10 @@ exports.resendOTP = async (req, res) => {
     // Send OTP via email
     const emailResult = await sendEmail({
       email,
+      otp,
+      expiry: "15 minutes",
       subject: "Your New OTP for Balance Buddy",
+      message: `Your OTP for Balance Buddy is: ${otp}. This OTP will expire in 15 minutes.`,
       html: `
         <h1>Your New One-Time Password</h1>
         <p>Your OTP for Balance Buddy is: <strong>${otp}</strong></p>

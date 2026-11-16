@@ -1,12 +1,13 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const {
+  sendOTPEmail,
+  sendPasswordResetEmail,
+} = require("../config/emailConfig");
 
 // Fallbacks for environment variables
 const JWT_SECRET = process.env.JWT_SECRET || "dev_jwt_secret";
-const EMAIL_USERNAME = process.env.EMAIL_USERNAME || "your_email@gmail.com";
-const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD || "your_email_password";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 // Generate JWT token
@@ -50,50 +51,20 @@ exports.registerUser = async (req, res) => {
 
     otpStorage.set(email, otpData);
 
-    // Create transporter
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: EMAIL_USERNAME,
-        pass: EMAIL_PASSWORD,
-      },
+    // Send email via EmailJS
+    const emailResult = await sendOTPEmail({
+      email,
+      otp,
+      name: fullName,
+      expiryMinutes: 2,
     });
 
-    // Email content
-    const mailOptions = {
-      from: EMAIL_USERNAME,
-      to: email,
-      subject: "Verify Your Email - BalanceBuddy",
-      html: `
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #10B981; margin-bottom: 20px;">BalanceBuddy</h1>
-            <h2 style="color: #374151;">Email Verification</h2>
-          </div>
-          
-          <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-            <p style="color: #4B5563; margin-bottom: 20px;">Thank you for registering with BalanceBuddy. Please use the verification code below to complete your registration:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <div style="background-color: #E5E7EB; padding: 15px; border-radius: 5px; display: inline-block; letter-spacing: 8px; font-size: 24px; font-weight: bold;">
-                ${otp}
-              </div>
-            </div>
-            
-            <p style="color: #4B5563; margin-bottom: 10px;">This code will expire in 2 minutes.</p>
-            
-            <p style="color: #4B5563; font-size: 0.9em;">If you didn't request this, please ignore this email.</p>
-          </div>
-          
-          <div style="text-align: center; color: #6B7280; font-size: 0.8em;">
-            <p>BalanceBuddy - Your Financial Management Solution</p>
-          </div>
-        </div>
-      `,
-    };
-
-    // Send email
-    await transporter.sendMail(mailOptions);
+    if (!emailResult.success) {
+      return res.status(500).json({
+        message: "Failed to send verification email. Please check your email configuration.",
+        error: emailResult.error,
+      });
+    }
 
     // If this is just an OTP request without registration
     if (sendOtpOnly) {
@@ -191,44 +162,20 @@ exports.resendOTP = async (req, res) => {
       expires: Date.now() + 2 * 60 * 1000, // 2 minutes expiration
     });
 
-    // Create transporter
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: EMAIL_USERNAME,
-        pass: EMAIL_PASSWORD,
-      },
+    // Send email via EmailJS
+    const emailResult = await sendOTPEmail({
+      email,
+      otp: newOTP,
+      name: otpData.userData?.fullName || "User",
+      expiryMinutes: 2,
     });
 
-    // Email content
-    const mailOptions = {
-      from: EMAIL_USERNAME,
-      to: email,
-      subject: "New Verification Code - BalanceBuddy",
-      html: `
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #10B981; margin-bottom: 20px;">BalanceBuddy</h1>
-            <h2 style="color: #374151;">New Verification Code</h2>
-          </div>
-          
-          <div style="background-color: #F3F4F6; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-            <p style="color: #4B5563; margin-bottom: 20px;">You requested a new verification code. Please use the code below to complete your registration:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <div style="background-color: #E5E7EB; padding: 15px; border-radius: 5px; display: inline-block; letter-spacing: 8px; font-size: 24px; font-weight: bold;">
-                ${newOTP}
-              </div>
-            </div>
-            
-            <p style="color: #4B5563; margin-bottom: 10px;">This code will expire in 2 minutes.</p>
-          </div>
-        </div>
-      `,
-    };
-
-    // Send email
-    await transporter.sendMail(mailOptions);
+    if (!emailResult.success) {
+      return res.status(500).json({
+        message: "Failed to send verification email",
+        error: emailResult.error,
+      });
+    }
 
     return res
       .status(200)
@@ -348,49 +295,20 @@ exports.forgotPassword = async (req, res) => {
     const resetUrl = `${FRONTEND_URL}/reset-password/${resetToken}`;
     // console.log("Reset URL created:", resetUrl);
 
-    // Create transporter
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: EMAIL_USERNAME,
-        pass: EMAIL_PASSWORD,
-      },
+    // Send email via EmailJS
+    const emailResult = await sendPasswordResetEmail({
+      email: user.email,
+      name: user.fullName || "User",
+      resetUrl,
+      expiryHours: 1,
     });
 
-    // Email content
-    const mailOptions = {
-      from: EMAIL_USERNAME,
-      to: user.email,
-      subject: "Password Reset Request - BalanceBuddy",
-      html: `
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #10B981;">BalanceBuddy</h1>
-          </div>
-          
-          <div style="background-color: #f7f7f7; padding: 20px; border-radius: 8px;">
-            <h2 style="color: #333; margin-bottom: 20px;">Password Reset Request</h2>
-            <p>You requested a password reset. Click the button below to reset your password:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background-color: #10B981; color: white; text-decoration: none; padding: 12px 24px; border-radius: 4px; font-weight: bold;">Reset Password</a>
-            </div>
-            
-            <p>This link will expire in 1 hour.</p>
-            <p>If you didn't request this, please ignore this email.</p>
-            
-            <div style="margin-top: 30px; font-size: 12px; color: #666;">
-              <p>If the button doesn't work, copy and paste this URL into your browser:</p>
-              <p style="word-break: break-all;">${resetUrl}</p>
-            </div>
-          </div>
-        </div>
-      `,
-    };
-
-    // Send email
-    const info = await transporter.sendMail(mailOptions);
-    // console.log("Email sent, ID:", info.messageId);
+    if (!emailResult.success) {
+      return res.status(500).json({
+        message: "Error sending reset email",
+        error: emailResult.error,
+      });
+    }
 
     res.status(200).json({ message: "Password reset email sent" });
   } catch (error) {

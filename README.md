@@ -12,7 +12,7 @@
 - 📈 **Interactive Dashboards** – Get clear and beautiful charts using `recharts` and `date-fns`.
 - 🤖 **AI-Powered Insights** – Get suggestions on spending patterns and budgeting with OpenAI API integration.
 - 🔐 **Robust Authentication** – Secure login system using `bcryptjs` for password hashing and `jsonwebtoken` for session management.
-- ✉️ **Smart Alerts** – Receive email notifications using `nodemailer` for critical updates.
+- ✉️ **Smart Alerts** – Receive email notifications using `EmailJS` (`@emailjs/nodejs`) for OTP verification and password recovery.
 
 ---
 
@@ -71,9 +71,15 @@ VITE_API_URL=http://localhost:5000
 
 ```
 PORT=5000
-MONGODB_URI=your_mongodb_connection_string
+MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:3000
+
+# EmailJS Configuration
+EMAILJS_SERVICE_ID=your_emailjs_service_id
+EMAILJS_TEMPLATE_ID=your_emailjs_template_id
+EMAILJS_PUBLIC_KEY=your_emailjs_public_key
+EMAILJS_PRIVATE_KEY=your_emailjs_private_key
 ```
 
 ---
@@ -92,7 +98,7 @@ FRONTEND_URL=http://localhost:5173
 - 🧠 Node.js + Express.js
 - 🗃 MongoDB with Mongoose
 - 🔒 bcryptjs + jsonwebtoken for secure auth
-- 📤 nodemailer for email services
+- 📤 @emailjs/nodejs for reliable email delivery (OTP verification & password reset)
 - 🌐 cors and dotenv for configuration
 - 🧠 openai for AI-powered financial suggestions
 
