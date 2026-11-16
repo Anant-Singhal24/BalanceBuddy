@@ -1,7 +1,6 @@
 import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Wallet, Eye, EyeOff, User, Mail, Lock, Loader2 } from "lucide-react";
-// import { saveUser, isAuthenticated } from "../utils/auth";
+import { Wallet, Eye, EyeOff, User, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 import axiosInstance from "../utils/axiosInstance";
 import { API_PATHS } from "../utils/apiPaths";
 import { UserContext } from "../context/UserContext";
@@ -15,21 +14,18 @@ export default function SignUp() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { updateUser } = useContext(UserContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Validate password length
     if (password.length < 6) {
       setError("Password must be at least 6 characters long");
       setLoading(false);
       return;
     }
 
-    // Create user data object
     const userData = {
       fullName,
       email,
@@ -37,20 +33,18 @@ export default function SignUp() {
     };
 
     try {
-      // Instead of registering directly, send OTP first
       const response = await axiosInstance.post(API_PATHS.AUTH.REGISTER, {
         email,
         fullName,
         password,
-        sendOtpOnly: true, // Flag to indicate we just want to generate and send OTP
+        sendOtpOnly: true,
       });
 
       if (response.data.success) {
-        // Navigate to OTP verification page
         navigate("/verify-otp", {
           state: {
             email,
-            userData, // Pass user data to be used after OTP verification
+            userData,
           },
         });
       }
@@ -58,7 +52,7 @@ export default function SignUp() {
       if (error.response && error.response.data.message) {
         setError(error.response.data.message);
       } else {
-        setError("Something went wrong. Please try again.");
+        setError("Failed to start registration. Please try again.");
       }
       setLoading(false);
     }
@@ -66,133 +60,143 @@ export default function SignUp() {
 
   return (
     <AuthBackground>
-      <div className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md mx-auto">
-        <div className="flex flex-col items-center mb-8">
-          <div className="bg-emerald-500 p-4 rounded-full shadow-lg mb-4">
+      <div className="bg-white/95 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl border border-white/20 w-full max-w-md mx-auto">
+        <div className="flex flex-col items-center mb-8 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/30 mb-4 transform hover:scale-105 transition-transform duration-300">
             <Wallet className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800">BalanceBuddy</h1>
-          <p className="text-gray-500 mt-2">Create a new account</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Create Account
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Join BalanceBuddy to track & optimize your finances
+          </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
-            <p className="font-medium">Registration Error</p>
-            <p>{error}</p>
+          <div className="mb-6 p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2 animate-shake">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold">Registration Notice</p>
+              <p className="text-xs text-red-600 mt-0.5">{error}</p>
+            </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
             <label
               htmlFor="fullName"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-600"
             >
               Full Name
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-5 w-5 text-gray-400" />
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                <User className="h-5 w-5" />
               </div>
               <input
                 type="text"
                 id="fullName"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="pl-10 block w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-3 border"
+                placeholder="John Doe"
+                className="pl-11 pr-4 block w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 p-3 text-sm transition-all outline-none"
                 required
               />
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-600"
             >
-              Email
+              Email Address
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                <Mail className="h-5 w-5" />
               </div>
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 block w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-3 border"
+                placeholder="you@example.com"
+                className="pl-11 pr-4 block w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 p-3 text-sm transition-all outline-none"
                 required
               />
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-600"
             >
               Password
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
+                <Lock className="h-5 w-5" />
               </div>
               <input
                 type={showPassword ? "text" : "password"}
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 block w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-3 border"
-                placeholder="••••••••"
+                className="pl-11 pr-11 block w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 p-3 text-sm transition-all outline-none"
+                placeholder="At least 6 characters"
                 required
                 minLength={6}
               />
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeOff className="h-5 w-5 text-emerald-500" />
+                  <EyeOff className="h-4 w-4" />
                 ) : (
-                  <Eye className="h-5 w-5 text-emerald-500" />
+                  <Eye className="h-4 w-4" />
                 )}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Must be at least 6 characters
-            </p>
+            <p className="text-[11px] text-slate-400">Must be at least 6 characters.</p>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-500 text-white py-3 px-4 rounded-lg hover:bg-emerald-600 transition-all shadow-lg flex items-center justify-center font-medium text-base"
+            className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all font-semibold text-sm flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed mt-2"
           >
             {loading ? (
               <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Sending OTP...
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Sending Verification Code...
               </>
             ) : (
-              "Create Account"
+              <>
+                Continue with Email Verification
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </>
             )}
           </button>
 
-          <div className="relative flex py-3 items-center">
-            <div className="flex-grow border-t border-gray-200"></div>
-            <span className="flex-shrink mx-4 text-sm text-gray-400">
-              Already have an account?
+          <div className="relative flex py-2 items-center">
+            <div className="flex-grow border-t border-slate-200"></div>
+            <span className="flex-shrink mx-3 text-xs uppercase tracking-wider text-slate-400 font-medium">
+              already registered?
             </span>
-            <div className="flex-grow border-t border-gray-200"></div>
+            <div className="flex-grow border-t border-slate-200"></div>
           </div>
 
           <Link
             to="/login"
-            className="block w-full text-center py-3 px-4 border border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 transition-all font-medium"
+            className="w-full py-3 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all flex items-center justify-center text-center shadow-sm"
           >
-            Sign In
+            Sign In to Existing Account
           </Link>
         </form>
       </div>

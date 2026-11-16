@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, ArrowUpRight, TrendingUp, Sparkles, Calendar, Tag, AlignLeft } from "lucide-react";
 import axiosInstance from "../utils/axiosInstance";
 import { API_PATHS } from "../utils/apiPaths";
 import { incomeCategories } from "../constants/categories";
@@ -13,16 +13,14 @@ export default function Income() {
   const [date, setDate] = useState(new Date().toISOString());
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch income transactions
   useEffect(() => {
     const fetchIncome = async () => {
       setIsLoading(true);
       try {
-        const response = await axiosInstance.get(
-          API_PATHS.INCOME.GET_ALL_INCOME
-        );
-        setTransactions(response.data);
+        const response = await axiosInstance.get(API_PATHS.INCOME.GET_ALL_INCOME);
+        setTransactions(response.data || []);
       } catch (error) {
         console.error("Error fetching income:", error);
       } finally {
@@ -34,24 +32,31 @@ export default function Income() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert("Please enter a valid amount greater than 0");
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       const response = await axiosInstance.post(API_PATHS.INCOME.ADD_INCOME, {
         source: category,
         description,
-        amount: parseFloat(amount),
+        amount: parsedAmount,
         date,
       });
 
       setTransactions([response.data, ...transactions]);
 
-      // Reset form
       setAmount("");
       setCategory("");
       setDescription("");
       setDate(new Date().toISOString());
     } catch (error) {
       console.error("Error adding income:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -66,41 +71,85 @@ export default function Income() {
     }
   };
 
-  // Format date and time for display
+  const totalIncomeCalculated = transactions.reduce(
+    (sum, t) => sum + (Number(t.amount) || 0),
+    0
+  );
+
   const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
+    const d = new Date(dateString);
     return {
-      date: date.toLocaleDateString(),
-      time: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      date: d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+      time: d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Income</h1>
+    <div className="space-y-6 sm:space-y-8 animate-fade-in">
+      {/* Page Header with Stats Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Income Management
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Track and categorize your incoming revenue streams
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4">Add Income</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200/80 shadow-sm self-start sm:self-auto">
+          <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+            ₹
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+              Recorded Inflow
+            </p>
+            <p className="text-lg font-extrabold text-emerald-700 leading-tight">
+              ₹{totalIncomeCalculated.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Form Card (5 cols) */}
+        <div className="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hover:shadow-md transition-all self-start">
+          <div className="flex items-center gap-2 pb-4 mb-5 border-b border-slate-100">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <PlusCircle className="w-4 h-4" />
+            </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Amount
+              <h2 className="text-sm font-bold text-slate-800">Add New Income</h2>
+              <p className="text-[11px] text-slate-400">Record an inflow payment or salary</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                Amount (₹)
               </label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-2 border"
-                required
-                min="0"
-                step="1"
-              />
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-bold text-sm">
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="pl-8 pr-4 block w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 p-3 text-sm transition-all outline-none"
+                  required
+                  min="0.01"
+                  step="any"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Category
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                Income Category
               </label>
               <CategorySelect
                 categories={incomeCategories}
@@ -109,21 +158,22 @@ export default function Income() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
                 Description
               </label>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-2 border"
+                placeholder="e.g. October Consulting Fee"
+                className="px-3.5 block w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 p-3 text-sm transition-all outline-none"
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
                 Date & Time
               </label>
               <DatePicker
@@ -138,30 +188,52 @@ export default function Income() {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-emerald-500 text-white py-2 px-4 rounded-md hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              disabled={isSubmitting}
+              className="w-full mt-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all font-semibold text-sm flex items-center justify-center gap-2 group disabled:opacity-70"
             >
-              <PlusCircle className="w-5 h-5" />
-              Add Income
+              <PlusCircle className="w-4 h-4" />
+              <span>{isSubmitting ? "Adding Income..." : "Save Income Stream"}</span>
             </button>
           </form>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4">Income History</h2>
+        {/* History List Card (7 cols) */}
+        <div className="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hover:shadow-md transition-all">
+          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-sm font-bold text-slate-800">Income Entries</h2>
+              <p className="text-[11px] text-slate-400">
+                {transactions.length} total entries recorded
+              </p>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+              Sorted by latest
+            </span>
+          </div>
+
           {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
+            <div className="space-y-3 py-6 animate-pulse">
+              <div className="h-16 bg-slate-100 rounded-xl"></div>
+              <div className="h-16 bg-slate-100 rounded-xl"></div>
+              <div className="h-16 bg-slate-100 rounded-xl"></div>
             </div>
           ) : transactions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No income records found
+            <div className="py-16 text-center text-slate-400">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                <ArrowUpRight className="w-6 h-6" />
+              </div>
+              <p className="font-semibold text-slate-700 text-sm">No income recorded yet</p>
+              <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                Use the form on the left to log your first income stream.
+              </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-2.5 max-h-[580px] overflow-y-auto pr-1">
               {transactions.map((transaction) => {
-                const Icon = incomeCategories.find(
+                const categoryMatch = incomeCategories.find(
                   (c) => c.id === transaction.source
-                )?.icon;
+                );
+                const Icon = categoryMatch?.icon || TrendingUp;
                 const { date: displayDate, time: displayTime } = formatDateTime(
                   transaction.date
                 );
@@ -169,34 +241,35 @@ export default function Income() {
                 return (
                   <div
                     key={transaction._id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-between p-3.5 bg-slate-50/70 hover:bg-slate-100/90 rounded-xl transition-all border border-slate-100 group"
                   >
-                    <div className="flex items-center gap-3">
-                      {Icon && <Icon className="w-5 h-5 text-gray-500" />}
-                      <div>
-                        <p className="font-medium">{transaction.description}</p>
-                        <p className="text-sm text-gray-500">
-                          {incomeCategories.find(
-                            (c) => c.id === transaction.source
-                          )?.label || transaction.source}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100/80 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="truncate">
+                        <p className="font-semibold text-xs sm:text-sm text-slate-800 truncate">
+                          {transaction.description}
                         </p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs text-gray-400">{displayDate}</p>
-                          <span className="text-xs text-gray-400">•</span>
-                          <p className="text-xs text-gray-400">{displayTime}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[11px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                            {categoryMatch?.label || transaction.source}
+                          </span>
+                          <span className="text-[11px] text-slate-400">• {displayDate}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-emerald-500">
-                        +₹{transaction.amount.toFixed(2)}
+
+                    <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                      <span className="text-xs sm:text-sm font-bold text-emerald-600">
+                        +₹{Number(transaction.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </span>
                       <button
                         onClick={() => handleDelete(transaction._id)}
-                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
-                        title="Delete"
+                        className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors opacity-70 group-hover:opacity-100"
+                        title="Delete entry"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -209,4 +282,3 @@ export default function Income() {
     </div>
   );
 }
-

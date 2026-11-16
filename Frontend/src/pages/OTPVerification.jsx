@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Wallet } from "lucide-react";
+import { Wallet, ShieldCheck, RefreshCw, ArrowRight, CheckCircle2 } from "lucide-react";
 import axiosInstance from "../utils/axiosInstance";
 import { API_PATHS } from "../utils/apiPaths";
 import { UserContext } from "../context/UserContext";
@@ -12,6 +12,7 @@ const OTPVerification = () => {
   const [seconds, setSeconds] = useState(0);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   const { updateUser } = useContext(UserContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,17 +24,14 @@ const OTPVerification = () => {
       return;
     }
 
-    // Timer for OTP expiration
     const interval = setInterval(() => {
       if (seconds > 0) {
-        setSeconds(seconds - 1);
+        setSeconds((prev) => prev - 1);
       } else if (minutes > 0) {
-        setMinutes(minutes - 1);
+        setMinutes((prev) => prev - 1);
         setSeconds(59);
       } else {
-        // OTP expired
         clearInterval(interval);
-        setError("OTP has expired. Please request a new one.");
       }
     }, 1000);
 
@@ -44,9 +42,11 @@ const OTPVerification = () => {
     e.preventDefault();
     setError("");
     setMessage("");
+    setIsVerifying(true);
 
     if (!otp || otp.length !== 6) {
-      setError("Please enter a valid 6-digit OTP");
+      setError("Please enter a valid 6-digit verification code");
+      setIsVerifying(false);
       return;
     }
 
@@ -57,9 +57,8 @@ const OTPVerification = () => {
       });
 
       if (response.data.success) {
-        setMessage("OTP verified successfully!");
+        setMessage("Code verified! Setting up your account...");
 
-        // User is now verified, complete registration
         const regResponse = await axiosInstance.post(
           API_PATHS.AUTH.COMPLETE_REGISTRATION,
           {
@@ -71,67 +70,69 @@ const OTPVerification = () => {
 
         if (token) {
           updateUser(user, token);
-          // Show success message briefly before redirecting
           setTimeout(() => {
             navigate("/");
-          }, 1500);
+          }, 1200);
         }
       } else {
-        setError("Invalid OTP. Please try again.");
+        setError("Invalid verification code. Please check and try again.");
+        setIsVerifying(false);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to verify OTP");
+      setError(err.response?.data?.message || "Failed to verify code. Please try again.");
+      setIsVerifying(false);
     }
   };
 
   const handleResendOTP = async () => {
     try {
       await axiosInstance.post(API_PATHS.AUTH.RESEND_OTP, { email });
-      setMessage("A new OTP has been sent to your email");
-      // Reset timer
+      setMessage("A fresh verification code has been sent to your email!");
       setMinutes(2);
       setSeconds(0);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to resend OTP");
+      setError(err.response?.data?.message || "Failed to resend code");
     }
   };
 
+  const isTimerExpired = minutes === 0 && seconds === 0;
+
   return (
     <AuthBackground>
-      <div className="bg-white p-8 rounded-lg shadow-xl w-full backdrop-blur-md bg-opacity-95 relative z-10">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <Wallet className="w-10 h-10 text-emerald-500" />
-          <h1 className="text-2xl font-bold text-gray-900">BalanceBuddy</h1>
+      <div className="bg-white/95 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl border border-white/20 w-full max-w-md mx-auto text-center">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/30 mx-auto mb-4">
+          <ShieldCheck className="w-8 h-8 text-white" />
         </div>
 
-        <h2 className="text-xl font-semibold text-gray-900 text-center mb-4">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
           Verify Your Email
         </h2>
 
-        <p className="text-sm text-gray-600 text-center mb-6">
-          We've sent a 6-digit verification code to{" "}
-          <span className="font-medium">{email}</span>
+        <p className="text-sm text-slate-500 mt-2 mb-6">
+          We sent a 6-digit code to <br />
+          <span className="font-semibold text-slate-800 break-all">{email}</span>
         </p>
 
         {message && (
-          <div className="mb-4 p-2 bg-green-100 text-green-700 text-sm rounded">
-            {message}
+          <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-medium flex items-center gap-2 text-left animate-fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span>{message}</span>
           </div>
         )}
 
         {error && (
-          <div className="mb-4 p-2 bg-red-100 text-red-700 text-sm rounded">
+          <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium text-left animate-shake">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
               htmlFor="otp"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2"
             >
-              Enter Verification Code
+              Enter 6-Digit Passcode
             </label>
             <input
               type="text"
@@ -140,43 +141,55 @@ const OTPVerification = () => {
               onChange={(e) =>
                 setOtp(e.target.value.replace(/[^0-9]/g, "").substring(0, 6))
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 p-2 border text-center text-lg tracking-widest"
+              className="w-full text-center tracking-[0.6em] text-3xl font-bold rounded-2xl border border-slate-200 bg-slate-50/50 text-slate-900 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 py-3.5 px-4 transition-all outline-none"
               required
-              placeholder="• • • • • •"
+              placeholder="••••••"
               maxLength={6}
+              autoFocus
             />
           </div>
 
-          <div className="text-center text-sm text-gray-500">
-            {minutes > 0 || seconds > 0 ? (
-              <p>
-                Time remaining: {minutes}:
-                {seconds < 10 ? `0${seconds}` : seconds}
-              </p>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
+            {!isTimerExpired ? (
+              <span>
+                Code expires in:{" "}
+                <strong className="text-emerald-600 font-bold">
+                  {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
+                </strong>
+              </span>
             ) : (
-              <p>OTP expired</p>
+              <span className="text-red-500 font-semibold">Code expired</span>
             )}
           </div>
 
           <button
             type="submit"
-            className="w-full bg-emerald-500 text-white py-2 px-4 rounded-md hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            disabled={isVerifying || otp.length !== 6}
+            className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all font-semibold text-sm flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Verify OTP
+            {isVerifying ? (
+              <span>Verifying & Logging In...</span>
+            ) : (
+              <>
+                Confirm & Continue
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </>
+            )}
           </button>
 
-          <div className="text-center">
+          <div className="pt-2">
             <button
               type="button"
               onClick={handleResendOTP}
-              disabled={minutes > 0 || seconds > 0}
-              className={`text-sm ${
-                minutes > 0 || seconds > 0
-                  ? "text-gray-400 cursor-not-allowed"
-                  : "text-emerald-600 hover:underline"
+              disabled={!isTimerExpired}
+              className={`text-xs font-semibold flex items-center justify-center gap-1.5 mx-auto transition-colors ${
+                !isTimerExpired
+                  ? "text-slate-400 cursor-not-allowed"
+                  : "text-emerald-600 hover:text-emerald-700 hover:underline"
               }`}
             >
-              Resend OTP
+              <RefreshCw className="w-3.5 h-3.5" />
+              Didn't receive code? Resend Code
             </button>
           </div>
         </form>
