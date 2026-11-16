@@ -431,3 +431,29 @@ exports.verifyResetToken = async (req, res) => {
       .json({ valid: false, message: "Error verifying token" });
   }
 };
+
+// Google OAuth Callback Handler
+exports.googleAuthCallback = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect(`${FRONTEND_URL}/login?error=Authentication+failed`);
+    }
+
+    const token = generateToken(req.user._id);
+    const userData = {
+      _id: req.user._id,
+      fullName: req.user.fullName,
+      email: req.user.email,
+      isGoogleUser: req.user.isGoogleUser,
+    };
+
+    const targetUrl = `${FRONTEND_URL}/oauth-callback?token=${encodeURIComponent(
+      token
+    )}&user=${encodeURIComponent(JSON.stringify(userData))}`;
+
+    return res.redirect(targetUrl);
+  } catch (error) {
+    console.error("Error in Google Auth callback:", error);
+    return res.redirect(`${FRONTEND_URL}/login?error=Internal+Server+Error`);
+  }
+};

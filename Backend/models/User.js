@@ -5,7 +5,14 @@ const UserSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: {
+      type: String,
+      required: function () {
+        return !this.isGoogleUser;
+      },
+    },
+    googleId: { type: String },
+    isGoogleUser: { type: Boolean, default: false },
     resetPasswordToken: {
       type: String,
       index: true,
@@ -19,7 +26,7 @@ const UserSchema = new mongoose.Schema(
 UserSchema.pre("save", async function (next) {
   try {
     // Only hash the password if it has been modified (or is new)
-    if (!this.isModified("password")) return next();
+    if (!this.isModified("password") || !this.password) return next();
 
     // Generate a salt
     const salt = await bcrypt.genSalt(10);

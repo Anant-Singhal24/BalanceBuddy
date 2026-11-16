@@ -11,6 +11,7 @@ import AiInsights from "./pages/AiInsights";
 import ForgotPassword from "./pages/ForgotPassword";
 import PasswordReset from "./pages/PasswordReset";
 import OTPVerification from "./pages/OTPVerification";
+import OAuthCallback from "./pages/OAuthCallback";
 import UserProvider, { UserContext } from "./context/UserContext";
 
 function ProtectedRoute({ children }) {
@@ -105,6 +106,7 @@ export default function App() {
             }
           />
           <Route path="/reset-password/:token" element={<PasswordReset />} />
+          <Route path="/oauth-callback" element={<OAuthCallback />} />
 
           <Route
             path="/"

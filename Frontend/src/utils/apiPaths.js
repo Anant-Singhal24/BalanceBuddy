@@ -12,6 +12,7 @@ export const API_PATHS = {
     VERIFY_OTP: "/api/v1/auth/verify-otp",
     RESEND_OTP: "/api/v1/auth/resend-otp",
     COMPLETE_REGISTRATION: "/api/v1/auth/complete-registration",
+    GOOGLE_AUTH: `${BASE_URL}/api/v1/auth/google`,
   },
   DASHBOARD: {
     GET_DATA: "/api/v1/dashboard",
